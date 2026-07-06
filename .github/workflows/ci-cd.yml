@@ -83,7 +83,7 @@ jobs:
       - name: Prepare deployment bundle
         run: |
           tar -czf prompt2pbi-deploy-${{ github.sha }}.tar.gz \
-            app ui docker .env.prod requirements.txt README.md
+            app ui docker requirements.txt README.md
 
       - name: Upload deployment artifact
         uses: actions/upload-artifact@v4
