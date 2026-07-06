@@ -1,0 +1,103 @@
+version: "3.9"
+
+x-common-env: &common-env
+  env_file:
+    - ../.env.dev
+
+x-web-service: &web-service
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  <<: *common-env
+  restart: unless-stopped
+  volumes:
+    - ../output:/app/output
+    - ../data/uploads:/app/data/uploads
+    - ../output/logs:/app/output/logs
+  depends_on:
+    redis:
+      condition: service_healthy
+
+services:
+  web:
+    <<: *web-service
+    ports:
+      - "8000:8000"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis_data:/data
+
+  worker:
+    <<: *web-service
+    command: ["celery", "-A", "app.celery_app.celery", "worker", "--loglevel=info", "--concurrency=2"]
+    depends_on:
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import importlib.util; assert importlib.util.find_spec('celery') is not None"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  flower:
+    <<: *web-service
+    profiles: ["observability"]
+    command: ["celery", "-A", "app.celery_app.celery", "flower", "--port=5555", "--address=0.0.0.0"]
+    ports:
+      - "5555:5555"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5555').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  nginx:
+    image: nginx:1.27-alpine
+    profiles: ["proxy"]
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      web:
+        condition: service_healthy
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../output/static:/var/www/static:ro
+      - ../deploy/certs:/etc/letsencrypt:ro
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  redis_data:
+

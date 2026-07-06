@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prompt2pbi-worker
+  namespace: prompt2pbi
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: prompt2pbi-worker
+  template:
+    metadata:
+      labels:
+        app: prompt2pbi-worker
+    spec:
+      containers:
+        - name: worker
+          image: prompt2pbi:latest
+          imagePullPolicy: IfNotPresent
+          command: ["celery", "-A", "app.celery_app.celery", "worker", "--loglevel=info"]
+          envFrom:
+            - configMapRef:
+                name: prompt2pbi-config
+            - secretRef:
+                name: prompt2pbi-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          volumeMounts:
+            - name: shared-storage
+              mountPath: /app/data/uploads
+              subPath: uploads
+            - name: shared-storage
+              mountPath: /app/output
+              subPath: output
+      volumes:
+        - name: shared-storage
+          persistentVolumeClaim:
+            claimName: prompt2pbi-shared-storage
+

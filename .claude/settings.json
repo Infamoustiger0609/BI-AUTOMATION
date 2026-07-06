@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest tests/test_job_store.py -v)",
+      "Bash(python -m pytest tests/test_tasks.py -v)",
+      "Bash(python -m pytest tests/ -q)",
+      "Bash(python -c ' *)",
+      "Bash(python -m pytest tests/test_pbix.py -q)",
+      "Bash(pip show *)",
+      "Bash(pip download *)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && grep -n \"^class \\\\|def add_table\\\\|def add_measure\\\\|def add_relationship\\\\|def add_page\\\\|def save\\\\|def build\\\\b\" builder.py | head -60)",
+      "Read(//tmp/pbixmcp_check/extracted/**)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && grep -rn -i \"theme\\\\|colou\\\\?r\\\\|palette\\\\|format_string\\\\|formatstring\\\\|display_folder\" builder.py builder_v2.py | head -60)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && sed -n '74,260p' builder.py)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && grep -n \"format\" builder.py -i | grep -v \"FormatString\\\\b.*Expression\\\\|json.dumps\\\\|f\\\\\"\" | head -40)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && sed -n '1,73p' builder.py)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && sed -n '260,420p' builder.py)",
+      "Bash(cd /tmp/pbixmcp_check/extracted && find . -iname \"*.md\" -o -iname \"*.txt\" | head -20 && echo \"---dist-info---\" && find . -iname \"*dist-info*\" -type d)",
+      "Read(//tmp/pbixmcp_check/**)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && grep -rn \"visualType\\\\|VISUAL_TYPES\\\\|valid.*visual\\\\|card\\\\b.*=\\\\|barChart\\\\|columnChart\\\\|lineChart\\\\|donutChart\\\\|pieChart\\\\|clusteredColumnChart\\\\|waterfallChart\" server.py models/requests.py 2>/dev/null | head -60)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && sed -n '3060,3100p' server.py)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && grep -n \"visual_type\\\\b\" builder.py | head -40)",
+      "Bash(awk '/^def |^class |^async def /{print NR\": \"$0}' server.py)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && grep -n \"@mcp.tool\\\\|^def apply_theme\\\\|^async def apply_theme\\\\|^def.*color\\\\|^async def.*color\" server.py | head -20)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && sed -n '1,60p' builder_v2.py)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && sed -n '400,480p' builder_v2.py)",
+      "Bash(cd /tmp/pbixmcp_check/extracted/pbix_mcp && sed -n '567,736p' builder.py)",
+      "Bash(cygpath -w /tmp/pbixmcp_check/extracted)",
+      "Bash(python -c \"import os; print\\(os.path.abspath\\('/tmp/pbixmcp_check/extracted'\\)\\)\")",
+      "Bash(python -m pytest tests/test_pbix.py -q -k \"orderid or hallucinated or count_metric or metric_source_column\")"
+    ]
+  }
+}

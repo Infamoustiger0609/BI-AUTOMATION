@@ -1,0 +1,21 @@
+# Shared storage for uploaded source files and generated .pbix artifacts.
+#
+# The web deployment runs multiple replicas and the worker deployment runs in
+# separate pods entirely, so a file saved by one pod (an upload, or a
+# generated dashboard) must be visible to whichever pod later reads it -- the
+# worker that builds the PBIX, or the web replica a client's download request
+# happens to land on. This requires a ReadWriteMany-capable StorageClass
+# (e.g. NFS, Azure Files, AWS EFS via the efs-csi-driver, GCP Filestore).
+# Set storageClassName below to whatever your cluster provides for RWX volumes.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prompt2pbi-shared-storage
+  namespace: prompt2pbi
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: "" # REQUIRED: set to your cluster's RWX-capable StorageClass
+  resources:
+    requests:
+      storage: 20Gi

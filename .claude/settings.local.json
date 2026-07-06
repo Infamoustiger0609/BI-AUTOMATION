@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest tests/test_pbix.py -q)",
+      "Bash(python -m pytest tests/test_api.py tests/test_app_smoke.py -q)",
+      "Bash(python -m pytest tests/test_api.py -q)",
+      "Bash(python -m pytest tests/ -q)",
+      "Bash(python -m pytest tests/test_intent.py -q)",
+      "Bash(python -c \"from app.main import app; from app.services.pbix_builder import PBIXBuilder; from app.services.intent_parser import IntentParser; from app.services.job_manager import JobManager; print\\('OK - all modules import cleanly'\\)\")",
+      "Bash(time python -m pytest tests/ -q)"
+    ]
+  }
+}

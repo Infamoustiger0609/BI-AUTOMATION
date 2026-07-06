@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prompt2pbi-redis
+  namespace: prompt2pbi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prompt2pbi-redis
+  template:
+    metadata:
+      labels:
+        app: prompt2pbi-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          args: ["redis-server", "--appendonly", "yes"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+

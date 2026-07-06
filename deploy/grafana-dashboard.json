@@ -1,0 +1,32 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "panels": [
+    {
+      "title": "API Health",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "up{job=\"prompt2pbi\"}",
+          "legendFormat": "up"
+        }
+      ]
+    },
+    {
+      "title": "Request Rate",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(http_requests_total[5m])",
+          "legendFormat": "{{method}} {{status}}"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "title": "Prompt2PBI Monitoring",
+  "version": 1
+}
+
