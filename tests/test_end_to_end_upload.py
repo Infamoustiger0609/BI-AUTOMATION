@@ -14,13 +14,21 @@ import pandas as pd
 import pytest
 
 from app.config import Settings
+from app.services import job_manager as job_manager_module
 from app.services.data_handler import DataHandler
 from app.services.intent_parser import IntentParser
 from app.services.job_manager import JobManager
 from app.services.pbix_builder import PBIXBuilder
 
 
-def _job_manager(tmp_path: Path) -> JobManager:
+def _job_manager(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> JobManager:
+    # Force the local ThreadPoolExecutor fallback instead of Celery. In CI a
+    # real Redis is reachable, so celery.send_task() happily enqueues the job
+    # -- but with no worker running to consume it, the job sits in "queued"
+    # forever and _run_job_and_wait() times out. These tests care about the
+    # generation pipeline itself, not which executor runs it.
+    monkeypatch.setattr(job_manager_module, "celery", None)
+
     settings = Settings()
     settings.output_dir = tmp_path / "output"
     settings.upload_dir = tmp_path / "uploads"
@@ -57,11 +65,11 @@ def _run_job_and_wait(job_manager: JobManager, job_id: str, timeout_seconds: flo
     raise TimeoutError(f"Job {job_id} did not finish in time")
 
 
-def test_uploaded_csv_generates_pbix_without_synthetic_data(tmp_path):
+def test_uploaded_csv_generates_pbix_without_synthetic_data(tmp_path, monkeypatch):
     """Prompt + a real uploaded CSV -> a working .pbix, never touching
     DataHandler.generate_sample_data_from_intent()."""
 
-    job_manager = _job_manager(tmp_path)
+    job_manager = _job_manager(tmp_path, monkeypatch)
     csv_path = _write_sample_csv(tmp_path / "uploads" / "real_sales.csv")
 
     job = job_manager.submit_generation(
@@ -83,14 +91,14 @@ def test_uploaded_csv_generates_pbix_without_synthetic_data(tmp_path):
     assert record.temp_files and record.temp_files[0] == csv_path
 
 
-def test_uploaded_csv_with_mismatched_dimension_name_does_not_crash(tmp_path):
+def test_uploaded_csv_with_mismatched_dimension_name_does_not_crash(tmp_path, monkeypatch):
     """Regression test for the live bug found while testing the Gradio flow:
     the (fallback) parser suggested dimension names "Product"/"Category" that
     don't exist in the real data (the actual column is "Product_Category"),
     which crashed _build_dimension_tables with a pandas KeyError. Must degrade
     gracefully instead."""
 
-    job_manager = _job_manager(tmp_path)
+    job_manager = _job_manager(tmp_path, monkeypatch)
     csv_path = tmp_path / "uploads" / "products.csv"
     pd.DataFrame(
         {
